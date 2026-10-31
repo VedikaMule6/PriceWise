@@ -1,0 +1,557 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>PriceWise - Smart Price Comparison</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    <header>
+        <div class="header-content">
+            <h1>🛍️ PriceWise</h1>
+            <p>Compare Prices. Shop Smart. Save More.</p>
+        </div>
+    </header>
+
+    <!-- NAVIGATION -->
+    <nav>
+        <button onclick="showHome()">🏠 Home</button>
+        <button onclick="showCompare()">🔍 Compare Prices</button>
+        <button onclick="showWishlist()">❤️ Wishlist</button>
+        <button onclick="showShoppingList()">🛒 Shopping List</button>
+        <button onclick="showDeals()">🏷️ Best Deals</button>
+        <button onclick="showPage('assistantPage')">🤖 Smart Assistant</button>
+        <button onclick="showPage('priceTrackerPage'); displayTrackedPrices()">📉 Price Tracker</button>
+        <button onclick="toggleTheme()">🌙 Theme</button>
+    </nav>
+
+    <main>
+
+        <!-- SEARCH SECTION -->
+        <section class="search-box">
+
+            <h2>Find the Best Price for Your Favourite Products</h2>
+
+            <p>Search products and compare prices across different stores.</p>
+
+            <form id="searchForm">
+
+                <input
+                    type="text"
+                    id="search"
+                    placeholder="Search milk, rice, mobile, shoes..."
+                    autocomplete="off"
+                    required
+                >
+
+                <button type="submit">Search 🔍</button>
+
+            </form>
+
+        </section>
+
+
+        <!-- HOME PAGE -->
+        <section id="homePage" class="page">
+
+            <!-- PROMOTIONAL HERO BANNER -->
+            <section class="promo-banner">
+
+                <div class="promo-content">
+
+                    <span class="promo-label">
+                        SMART SHOPPING STARTS HERE
+                    </span>
+
+                    <h2>
+                        Find the Best Price for<br>
+                        Your Favourite Products
+                    </h2>
+
+                    <p>
+                        Compare prices across different stores and save money on every purchase.
+                    </p>
+
+                </div>
+
+                <div class="promo-illustration">
+                    <span>🛒</span>
+                    <span>🛍️</span>
+                    <span>📱</span>
+                </div>
+
+                <div class="promo-circle">
+                    <h3>Save More<br>Every Day</h3>
+                </div>
+
+            </section>
+
+
+            <!-- CATEGORIES -->
+            <section class="shop-categories">
+
+                <div class="category-heading">
+
+                    <h2>Shop by Category</h2>
+
+                    <button type="button" onclick="showAllCategories()">
+                        See All ❯
+                    </button>
+
+                </div>
+
+
+                <!-- FOOD CATEGORIES -->
+                <h3 class="category-section-title">
+                    🛒 Food Products
+                </h3>
+
+                <div class="category-grid">
+
+                    <div class="category-item" onclick="searchCategory('fruits')">
+                        <div class="category-image">🍎</div>
+                        <p>Fruits & Vegetables</p>
+                    </div>
+
+                    <div class="category-item" onclick="searchCategory('milk')">
+                        <div class="category-image">🥛</div>
+                        <p>Dairy, Bread & Eggs</p>
+                    </div>
+
+                    <div class="category-item" onclick="searchCategory('rice')">
+                        <div class="category-image">🍚</div>
+                        <p>Atta, Rice, oil & Grains</p>
+                    </div>
+
+                    <div class="category-item" onclick="searchCategory('frozen food')">
+                        <div class="category-image">🍗</div>
+                        <p>Frozen Food</p>
+                    </div>
+
+                    <div class="category-item" onclick="searchCategory('masala')">
+                        <div class="category-image">🌶️</div>
+                        <p>Masala</p>
+                    </div>
+
+                    <div class="category-item" onclick="searchCategory('muesli')">
+                        <div class="category-image">🥣</div>
+                        <p>Breakfast,Musli & Cereals</p>
+                    </div>
+
+                    <div class="category-item" onclick="searchCategory('namkeen')">
+                        <div class="category-image">🍿</div>
+                        <p>Munchies & Namkeen</p>
+                    </div>
+
+                    <div class="category-item" onclick="searchCategory('coffee')">
+                        <div class="category-image">☕</div>
+                        <p>Snacks & Beverages</p>
+                    </div>
+
+                    <div class="category-item" onclick="searchCategory('tea')">
+                        <div class="category-image">🫖</div>
+                        <p>Tea & Coffee</p>
+                    </div>
+
+                    <div class="category-item" onclick="searchCategory('ice cream')">
+                        <div class="category-image">🍦</div>
+                        <p>Ice Cream & Desserts</p>
+                    </div>
+
+                    <div class="category-item" onclick="searchCategory('sweet')">
+                        <div class="category-image">🍬</div>
+                        <p>Sweets</p>
+                    </div>
+
+                    <div class="category-item" onclick="searchCategory('juice')">
+                        <div class="category-image">🧃</div>
+                        <p>Juices & Cold Drinks</p>
+                    </div>
+
+                    <div class="category-item" onclick="searchCategory('biscuit')">
+                        <div class="category-image">🍪</div>
+                        <p>Biscuits & cookies</p>
+                    </div>
+
+                    <div class="category-item" onclick="searchCategory('chocolate')">
+                        <div class="category-image">🍫</div>
+                        <p>Chocolates</p>
+                    </div>
+
+                    <div class="category-item" onclick="searchCategory('salt')">
+                        <div class="category-image">🌰</div>
+                        <p>Dry fruits</p>
+                    </div>
+
+                    <div class="category-item" onclick="searchCategory('salt')">
+                        <div class="category-image">🍜</div>
+                        <p>Pacakged Food</p>
+                    </div>
+
+                </div>
+
+
+                <!-- NON-FOOD CATEGORIES -->
+                <h3 class="category-section-title">
+                    🛍️ Non-Food Products
+                </h3>
+
+                <div class="category-grid">
+
+                    <div class="category-item" onclick="searchCategory('shoes')">
+                        <div class="category-image">👗</div>
+                        <p>Fashion & Clothing</p>
+                    </div>
+
+                    <div class="category-item" onclick="searchCategory('shoes')">
+                        <div class="category-image">👟</div>
+                        <p>Shoes & Lifestyle</p>
+                    </div>
+
+                    <div class="category-item" onclick="searchCategory('perfume')">
+                        <div class="category-image">💄</div>
+                        <p>Makeup & Beauty</p>
+                    </div>
+
+                    <div class="category-item" onclick="searchCategory('perfume')">
+                        <div class="category-image">🫧</div>
+                        <p>Skincare & Personal care</p>
+                    </div>
+
+                    <div class="category-item" onclick="searchCategory('body soap')">
+                        <div class="category-image">🧼</div>
+                        <p>Bath & Body</p>
+                    </div>
+
+                    <div class="category-item" onclick="searchCategory('detergent')">
+                        <div class="category-image">🧹🪣</div>
+                        <p>Cleaning Essentials</p>
+                    </div>
+
+                    <div class="category-item" onclick="searchCategory('condoms')">
+                        <div class="category-image">🩺</div>
+                        <p>Pharmacy & Wellness</p>
+                    </div>
+
+                    <div class="category-item" onclick="searchCategory('condoms')">
+                        <div class="category-image">🧴</div>
+                        <p>Fragrance</p>
+                    </div>
+
+                    <div class="category-item" onclick="searchCategory('condoms')">
+                        <div class="category-image">💍</div>
+                        <p>Jwellery</p>
+                    </div>
+
+                    <div class="category-item" onclick="searchCategory('condoms')">
+                        <div class="category-image">❤️</div>
+                        <p>Sexual & Wellnes </p>
+                    </div>
+
+                    <div class="category-item" onclick="searchCategory('condoms')">
+                        <div class="category-image">♀️</div>
+                        <p>Feminine Hygine</p>
+                    </div>
+
+                    <div class="category-item" onclick="searchCategory('condoms')">
+                        <div class="category-image">👼🏻</div>
+                        <p>Baby Care</p>
+                    </div>
+
+                    <div class="category-item" onclick="searchCategory('condoms')">
+                        <div class="category-image">💆🏻‍♀️</div>
+                        <p>Hair care</p>
+                    </div>
+
+                    <div class="category-item" onclick="searchCategory('condoms')">
+                        <div class="category-image">🏠</div>
+                        <p>Home care</p>
+                    </div>
+
+                    <div class="category-item" onclick="searchCategory('condoms')">
+                        <div class="category-image">🖊️</div>
+                        <p>Stationary & crafts</p>
+                    </div>
+
+                    <div class="category-item" onclick="searchCategory('condoms')">
+                        <div class="category-image">🎾</div>
+                        <p>Sports & Fitness</p>
+                    </div>
+
+                    <div class="category-item" onclick="searchCategory('condoms')">
+                        <div class="category-image">📚</div>
+                        <p>Book Store</p>
+                    </div>
+
+                     <div class="category-item" onclick="searchCategory('mobile')">
+                        <div class="category-image">📱</div>
+                        <p>Mobiles & Electronics</p>
+                    </div>
+
+                    <div class="category-item" onclick="searchCategory('laptop')">
+                        <div class="category-image">💻</div>
+                        <p>Laptops & Accessories</p>
+                    </div>
+
+                    <div class="category-item" onclick="searchCategory('condoms')">
+                        <div class="category-image">🎧</div>
+                        <p>Electronics Store</p>
+                    </div>
+
+                    <div class="category-item" onclick="searchCategory('games')">
+                        <div class="category-image">🎮</div>
+                        <p>Games & Toys</p>
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- POPULAR PRODUCTS -->
+            <section class="home-section">
+
+                <h2 class="section-title">
+                    🔥 Popular Products
+                </h2>
+
+                <div id="homeProducts" class="product-container"></div>
+
+            </section>
+
+
+            <!-- RECENT SEARCHES -->
+            <section class="home-section">
+
+                <h2 class="section-title">
+                    🕘 Recently Searched
+                </h2>
+
+                <div id="recentSearches" class="recent-searches"></div>
+
+            </section>
+
+        </section>
+
+
+        <!-- COMPARE PAGE -->
+        <section id="comparePage" class="page" hidden>
+
+            <h2>Compare Product Prices 🔍</h2>
+
+            <p>Compare available offers and find the lowest listed price.</p>
+
+            <div id="products" class="product-container"></div>
+
+        </section>
+
+
+        <!-- PRODUCT DETAILS -->
+        <section id="productDetailsPage" class="page" hidden>
+
+            <button onclick="showCompare()">← Back to Products</button>
+
+            <div id="productDetails"></div>
+
+        </section>
+
+
+        <!-- WISHLIST -->
+        <section id="wishlistPage" class="page" hidden>
+
+            <h2>❤️ My Wishlist</h2>
+
+            <p>Your favourite saved products.</p>
+
+            <div id="wishlistProducts" class="product-container"></div>
+
+        </section>
+
+
+        <!-- SHOPPING LIST -->
+        <section id="shoppingPage" class="page" hidden>
+
+            <h2>🛒 My Shopping List</h2>
+
+            <p>Manage your shopping products and calculate your estimated total.</p>
+
+            <div id="shoppingProducts" class="product-container"></div>
+
+            <h3 id="shoppingTotal">Estimated Total: ₹0</h3>
+
+        </section>
+
+
+        <!-- BEST DEALS -->
+        <section id="dealsPage" class="page" hidden>
+
+            <h2>🏷️ Best Deals</h2>
+
+            <p>Discover products with the lowest available listed prices.</p>
+
+            <div id="dealsProducts" class="product-container"></div>
+
+        </section>
+
+
+        <!-- SMART SHOPPING ASSISTANT -->
+        <section id="assistantPage" class="page" hidden>
+
+            <h2>🤖 Smart Shopping Assistant</h2>
+
+            <p>Find cheaper products, compare prices and plan your budget.</p>
+
+            <div class="assistant-container">
+
+                <div class="assistant-suggestions">
+
+                    <button type="button" onclick="useAssistantSuggestion('Find the cheapest rice')">
+                        Cheapest Rice
+                    </button>
+
+                    <button type="button" onclick="useAssistantSuggestion('Find products under 300')">
+                        Under ₹300
+                    </button>
+
+                    <button type="button" onclick="useAssistantSuggestion('Compare milk prices')">
+                        Compare Milk
+                    </button>
+
+                    <button type="button" onclick="useAssistantSuggestion('Help me save money')">
+                        Saving Tips
+                    </button>
+
+                </div>
+
+
+                <div id="assistantMessages" class="assistant-messages" aria-live="polite">
+
+                    <div class="assistant-message bot-message">
+                        Hi! 👋 Welcome to PriceWise.
+                        Ask me to find products, compare prices or help you shop within your budget.
+                    </div>
+
+                </div>
+
+
+                <form id="assistantForm" class="assistant-form">
+
+                    <input
+                        type="text"
+                        id="assistantInput"
+                        placeholder="Try: Find rice under ₹300"
+                        autocomplete="off"
+                        required
+                    >
+
+                    <button type="submit">Send ➤</button>
+
+                </form>
+
+
+                <p class="assistant-note">
+                    Recommendations depend on available product and price data.
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- PRICE DROP TRACKER -->
+        <section id="priceTrackerPage" class="page" hidden>
+
+            <h2>📉 Price Drop Tracker</h2>
+
+            <p>Set your target price and track products you want to purchase for less.</p>
+
+
+            <div class="tracker-form">
+
+                <h3>Track a Product</h3>
+
+                <form id="priceTrackerForm">
+
+                    <label for="trackerProductName">Product Name</label>
+
+                    <input
+                        type="text"
+                        id="trackerProductName"
+                        placeholder="Example: Basmati Rice 5 kg"
+                        required
+                    >
+
+
+                    <label for="trackerTargetPrice">Target Price (₹)</label>
+
+                    <input
+                        type="number"
+                        id="trackerTargetPrice"
+                        placeholder="Example: 500"
+                        min="1"
+                        step="0.01"
+                        required
+                    >
+
+
+                    <button type="submit">Add to Tracker</button>
+
+                </form>
+
+            </div>
+
+
+            <div id="trackedProducts" class="product-container">
+
+                <p>Your tracked products will appear here.</p>
+
+            </div>
+
+
+            <p class="tracker-note">
+                Price tracking uses the latest product prices loaded into PriceWise.
+                Background notifications are not currently supported.
+            </p>
+
+        </section>
+
+    </main>
+
+
+    <!-- FOOTER -->
+    <footer>
+
+        <h3>🛍️ PriceWise</h3>
+
+        <p>Compare Prices. Shop Smart. Save More.</p>
+
+        <p>PriceWise © 2026 | All Rights Reserved.</p>
+
+    </footer>
+
+
+    <!-- JAVASCRIPT -->
+    <script src="script.js"></script>
+
+    <script>
+        function showAllCategories() {
+
+            document.querySelector(".shop-categories").scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+
+        }
+    </script>
+
+</body>
+
+</html>
