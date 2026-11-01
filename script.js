@@ -1,8 +1,10 @@
 
+const API_URL = "/api/products/search";
 
-const API_URL = "/api/products";
+// ==========================================
+// 1. GLOBAL VARIABLES
+// ==========================================
 
-// Global variables
 let allProducts = [];
 let currentProducts = [];
 let wishlist = [];
@@ -11,7 +13,40 @@ let recentSearches = [];
 let trackedProducts = [];
 let currentProduct = null;
 
-// PRICEWISE CUSTOM NOTIFICATION
+// ==========================================
+// 2. NORMALIZE API PRODUCT DATA
+// ==========================================
+
+function normalizeProduct(product) {
+    return {
+        ...product,
+
+        id: product.id,
+
+        product_name:
+            product.productName || product.product_name || "",
+
+        brand: product.brand || "",
+
+        category: product.category || "",
+
+        quantity: product.quantity || "",
+
+        image_url:
+            product.imageUrl || product.image_url || "",
+
+        offers: product.offers || [],
+
+        lowestPrice: Number(product.lowestPrice || 0),
+
+        cheapestPlatform: product.cheapestPlatform || ""
+    };
+}
+
+// ==========================================
+// 3. CUSTOM NOTIFICATION
+// ==========================================
+
 function showToast(message, type = "success") {
 
     let toast = document.getElementById("priceWiseToast");
@@ -34,30 +69,43 @@ function showToast(message, type = "success") {
     }, 2500);
 }
 
+// ==========================================
+// 4. HTML ELEMENTS
+// ==========================================
 
-// HTML elements
 const searchForm = document.getElementById("searchForm");
 const searchInput = document.getElementById("search");
 const homeProducts = document.getElementById("homeProducts");
 const productsContainer = document.getElementById("products");
 
-// 1. LOAD PRODUCTS FROM MYSQL
+// ==========================================
+// 5. LOAD PRODUCTS FROM BACKEND API
+// ==========================================
 
 async function loadProducts() {
+
     try {
+
+        if (homeProducts) {
+            homeProducts.innerHTML = "<p>Loading products...</p>";
+        }
+
         const response = await fetch(API_URL);
+
         const data = await response.json();
 
         if (!response.ok) {
             throw new Error(data.message || "Unable to load products");
         }
 
-        allProducts = data.products || [];
+        allProducts = (data.products || []).map(normalizeProduct);
 
         displayHomeProducts();
+
         displayRecentSearches();
 
     } catch (error) {
+
         console.error("Product loading error:", error);
 
         if (homeProducts) {
@@ -67,9 +115,12 @@ async function loadProducts() {
     }
 }
 
-// 2. PAGE NAVIGATION
+// ==========================================
+// 6. PAGE NAVIGATION
+// ==========================================
 
 function showPage(pageId) {
+
     document.querySelectorAll(".page").forEach(page => {
         page.hidden = true;
     });
@@ -87,40 +138,53 @@ function showPage(pageId) {
 }
 
 function showHome() {
+
     showPage("homePage");
+
     displayHomeProducts();
+
     displayRecentSearches();
 }
 
 function showCompare() {
+
     showPage("comparePage");
 
     if (currentProducts.length > 0) {
         displayProducts(currentProducts);
-    } else {
+    } else if (productsContainer) {
         productsContainer.innerHTML =
             "<p>Search for a product to compare prices.</p>";
     }
 }
 
 function showWishlist() {
+
     showPage("wishlistPage");
+
     displayWishlist();
 }
 
 function showShoppingList() {
+
     showPage("shoppingPage");
+
     displayShoppingList();
 }
 
 function showDeals() {
+
     showPage("dealsPage");
+
     loadBestDeals();
 }
 
-
+// ==========================================
+// 7. SEARCH HELPER FUNCTIONS
+// ==========================================
 
 function levenshteinDistance(a, b) {
+
     const matrix = [];
 
     for (let i = 0; i <= a.length; i++) {
@@ -132,7 +196,9 @@ function levenshteinDistance(a, b) {
     }
 
     for (let i = 1; i <= a.length; i++) {
+
         for (let j = 1; j <= b.length; j++) {
+
             const cost = a[i - 1] === b[j - 1] ? 0 : 1;
 
             matrix[i][j] = Math.min(
@@ -147,6 +213,7 @@ function levenshteinDistance(a, b) {
 }
 
 function matchesSearch(product, search) {
+
     const text = [
         product.product_name,
         product.brand,
@@ -154,16 +221,23 @@ function matchesSearch(product, search) {
     ].join(" ").toLowerCase();
 
     const productWords = text.split(/\s+/);
+
     const searchWords = search.toLowerCase().trim().split(/\s+/);
 
     return searchWords.every(searchWord => {
+
         return productWords.some(productWord => {
+
             if (productWord.includes(searchWord)) {
                 return true;
             }
 
             if (searchWord.length >= 5 && productWord.length >= 5) {
-                return levenshteinDistance(searchWord, productWord) <= 1;
+
+                return levenshteinDistance(
+                    searchWord,
+                    productWord
+                ) <= 1;
             }
 
             return false;
@@ -172,18 +246,23 @@ function matchesSearch(product, search) {
 }
 
 // ==========================================
-// 3. SEARCH PRODUCTS
+// 8. SEARCH PRODUCTS USING BACKEND API
 // ==========================================
 
-searchForm.addEventListener("submit", function(event) {
-    event.preventDefault();
-    searchProduct();
-});
+if (searchForm) {
+
+    searchForm.addEventListener("submit", function(event) {
+
+        event.preventDefault();
+
+        searchProduct();
+    });
+}
 
 async function searchProduct(searchValue) {
 
     const search = (
-        searchValue || searchInput.value
+        searchValue || (searchInput ? searchInput.value : "")
     ).trim().toLowerCase();
 
     if (!search) {
@@ -193,28 +272,37 @@ async function searchProduct(searchValue) {
 
     showPage("comparePage");
 
-    productsContainer.innerHTML =
-        "<p>Searching products...</p>";
+    if (productsContainer) {
+        productsContainer.innerHTML =
+            "<p>Searching products...</p>";
+    }
 
     try {
 
-        // Get latest products from MySQL
-        const response = await fetch(API_URL);
+        const response = await fetch(
+            `${API_URL}?search=${encodeURIComponent(search)}`
+        );
+
         const data = await response.json();
 
         if (!response.ok) {
             throw new Error(data.message || "Search failed");
         }
 
-        allProducts = data.products || [];
+        currentProducts = (data.products || []).map(normalizeProduct);
 
-        // Search by product name, brand or category
-        currentProducts = allProducts.filter(product =>
-        matchesSearch(product, search)
-        );
+        if (currentProducts.length === 0) {
 
-        // Sort exact name matches first
+            productsContainer.innerHTML =
+                "<p>No matching products found.</p>";
+
+            return;
+        }
+
+        // Sort exact product name matches first
+
         currentProducts.sort((a, b) => {
+
             const aExact =
                 a.product_name.toLowerCase() === search ? 1 : 0;
 
@@ -224,24 +312,22 @@ async function searchProduct(searchValue) {
             return bExact - aExact;
         });
 
-        if (currentProducts.length === 0) {
-            productsContainer.innerHTML =
-                "<p>No matching products found.</p>";
-            return;
-        }
+        // Save recent searches
 
-        // Save recent searches in current browser session
         recentSearches = recentSearches.filter(
             item => item.toLowerCase() !== search
         );
 
         recentSearches.unshift(search);
+
         recentSearches = recentSearches.slice(0, 8);
 
         displayRecentSearches();
+
         displayProducts(currentProducts);
 
     } catch (error) {
+
         console.error("Search error:", error);
 
         productsContainer.innerHTML =
@@ -250,12 +336,19 @@ async function searchProduct(searchValue) {
 }
 
 // Category search
+
 function searchCategory(category) {
-    searchInput.value = category;
+
+    if (searchInput) {
+        searchInput.value = category;
+    }
+
     searchProduct(category);
 }
 
-// 4. DISPLAY HOME PRODUCTS
+// ==========================================
+// 9. DISPLAY HOME PRODUCTS
+// ==========================================
 
 function displayHomeProducts() {
 
@@ -264,31 +357,47 @@ function displayHomeProducts() {
     homeProducts.innerHTML = "";
 
     if (allProducts.length === 0) {
+
         homeProducts.innerHTML =
             "<p>No products available currently.</p>";
+
         return;
     }
 
     allProducts.forEach(product => {
-        homeProducts.appendChild(createProductCard(product));
+
+        homeProducts.appendChild(
+            createProductCard(product)
+        );
     });
 }
 
-// 5. CREATE PRODUCT CARD
+// ==========================================
+// 10. CREATE PRODUCT CARD
+// ==========================================
 
 function createProductCard(product) {
 
     const card = document.createElement("div");
+
     card.className = "product-card";
 
+    // Product image
+
     const image = document.createElement("div");
+
     image.className = "product-placeholder";
+
     image.textContent = "🛍️";
 
     if (product.image_url) {
+
         const img = document.createElement("img");
+
         img.src = product.image_url;
+
         img.alt = product.product_name;
+
         img.loading = "lazy";
 
         img.onerror = function() {
@@ -298,39 +407,112 @@ function createProductCard(product) {
         image.replaceWith(img);
     }
 
+    // Product name
+
     const title = document.createElement("h3");
+
     title.textContent = product.product_name;
 
+    // Brand
+
     const brand = document.createElement("p");
+
     brand.textContent = "Brand: " + (product.brand || "N/A");
 
+    // Category
+
     const category = document.createElement("p");
+
     category.textContent =
         "Category: " + (product.category || "N/A");
 
+    // Quantity
+
+    const quantity = document.createElement("p");
+
+    quantity.textContent =
+        "Quantity: " + (product.quantity || "N/A");
+
+    // Retailer prices
+
+    const offersContainer = document.createElement("div");
+
+    offersContainer.className = "product-offers";
+
+    if (product.offers && product.offers.length > 0) {
+
+        const lowestHeading = document.createElement("h4");
+
+        lowestHeading.textContent =
+            "Lowest Price: ₹" +
+            Number(product.lowestPrice).toLocaleString("en-IN");
+
+        offersContainer.appendChild(lowestHeading);
+
+        product.offers.forEach(offer => {
+
+            const offerText = document.createElement("p");
+
+            offerText.textContent =
+                offer.platform + ": ₹" +
+                Number(offer.price).toLocaleString("en-IN");
+
+            offersContainer.appendChild(offerText);
+        });
+
+        const cheapest = document.createElement("p");
+
+        cheapest.textContent =
+            "Best Price: " + product.cheapestPlatform;
+
+        offersContainer.appendChild(cheapest);
+
+    } else {
+
+        offersContainer.textContent = "No price offers available.";
+    }
+
+    // Product details button
+
     const detailsButton = document.createElement("button");
+
     detailsButton.textContent = "View Details";
+
     detailsButton.addEventListener("click", function() {
+
         showProductDetails(product.id);
     });
 
+    // Compare button
+
     const compareButton = document.createElement("button");
+
     compareButton.textContent = "Compare Prices";
+
     compareButton.addEventListener("click", function() {
+
         comparePrices(product.id);
     });
 
+    // Wishlist button
+
     const wishlistButton = document.createElement("button");
+
     wishlistButton.textContent = "❤️ Wishlist";
 
     wishlistButton.addEventListener("click", function() {
+
         toggleWishlist(product);
     });
 
+    // Shopping list button
+
     const shoppingButton = document.createElement("button");
+
     shoppingButton.textContent = "🛒 Add to List";
 
     shoppingButton.addEventListener("click", function() {
+
         addToShoppingList(product);
     });
 
@@ -339,6 +521,8 @@ function createProductCard(product) {
         title,
         brand,
         category,
+        quantity,
+        offersContainer,
         detailsButton,
         compareButton,
         wishlistButton,
@@ -348,104 +532,188 @@ function createProductCard(product) {
     return card;
 }
 
-// 6. DISPLAY SEARCH RESULTS
+// ==========================================
+// 11. DISPLAY SEARCH RESULTS
+// ==========================================
 
 function displayProducts(productList) {
+
+    if (!productsContainer) return;
 
     productsContainer.innerHTML = "";
 
     if (!productList || productList.length === 0) {
+
         productsContainer.innerHTML =
             "<p>No products found.</p>";
+
         return;
     }
 
     productList.forEach(product => {
+
         productsContainer.appendChild(
             createProductCard(product)
         );
     });
 }
 
-// 7. COMPARE AMAZON AND FLIPKART PRICES
+// ==========================================
+// 12. COMPARE AMAZON AND FLIPKART PRICES
+// ==========================================
 
-async function comparePrices(productId) {
+function comparePrices(productId) {
 
-    try {
+    const product = [...allProducts, ...currentProducts].find(
+        item => String(item.id) === String(productId)
+    );
 
-        const response = await fetch(
-            `${API_URL}/compare/${productId}`
+    if (!product) {
+
+        showToast("Product not found!", "error");
+
+        return;
+    }
+
+    if (!product.offers || product.offers.length === 0) {
+
+        showToast("No price offers available!", "error");
+
+        return;
+    }
+
+    currentProduct = product;
+
+    showPage("productDetailsPage");
+
+    const container =
+        document.getElementById("productDetails");
+
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    // Heading
+
+    const heading = document.createElement("h2");
+
+    heading.textContent =
+        product.product_name + " - Price Comparison";
+
+    container.appendChild(heading);
+
+    // Product information
+
+    const brand = document.createElement("p");
+
+    brand.textContent = "Brand: " + product.brand;
+
+    const category = document.createElement("p");
+
+    category.textContent = "Category: " + product.category;
+
+    container.append(brand, category);
+
+    // Offers
+
+    product.offers.forEach(item => {
+
+        const offer = document.createElement("div");
+
+        offer.className = "store-offer";
+
+        const platform = document.createElement("h3");
+
+        platform.textContent = item.platform;
+
+        const price = document.createElement("h2");
+
+        price.textContent =
+            "₹" + Number(item.price).toLocaleString("en-IN");
+
+        const discount = document.createElement("p");
+
+        discount.textContent =
+            "Discount: " + (item.discountPercent || 0) + "%";
+
+        const rating = document.createElement("p");
+
+        rating.textContent =
+            "Rating: " + (item.rating || "N/A");
+
+        const availability = document.createElement("p");
+
+        availability.textContent =
+            "Availability: " + (item.availability || "Unknown");
+
+        const link = document.createElement("a");
+
+        link.href = item.productUrl || "#";
+
+        link.target = "_blank";
+
+        link.rel = "noopener noreferrer";
+
+        link.textContent = "Visit Store";
+
+        offer.append(
+            platform,
+            price,
+            discount,
+            rating,
+            availability,
+            link
         );
 
-        const data = await response.json();
+        if (item.platform === product.cheapestPlatform) {
 
-        if (!response.ok) {
-            alert(data.message || "Unable to compare prices.");
-            return;
+            const label = document.createElement("p");
+
+            label.textContent = "🏆 Lowest Price";
+
+            offer.appendChild(label);
         }
 
-        showPage("productDetailsPage");
+        // Clearly identify demo prices
 
-        const container =
-            document.getElementById("productDetails");
+        if (item.priceSource && item.priceSource.type === "simulated") {
 
-        container.innerHTML = "";
+            const note = document.createElement("small");
 
-        const heading = document.createElement("h2");
-        heading.textContent = data.product + " - Price Comparison";
+            note.textContent = "Demo price - Not a live retailer price.";
 
-        container.appendChild(heading);
+            offer.appendChild(note);
+        }
 
-        data.prices.forEach(item => {
+        container.appendChild(offer);
+    });
 
-            const offer = document.createElement("div");
-            offer.className = "store-offer";
+    // Lowest price
 
-            const platform = document.createElement("h3");
-            platform.textContent = item.platform;
+    const lowest = document.createElement("h3");
 
-            const price = document.createElement("h2");
-            price.textContent = "₹" + Number(item.price).toLocaleString("en-IN");
+    lowest.textContent =
+        "Lowest Price: ₹" +
+        Number(product.lowestPrice).toLocaleString("en-IN");
 
-            const link = document.createElement("a");
-            link.href = item.product_url;
-            link.target = "_blank";
-            link.rel = "noopener noreferrer";
-            link.textContent = "Visit Store";
+    // Cheapest platform
 
-            offer.append(platform, price, link);
+    const cheapest = document.createElement("h3");
 
-            if (item.platform === data.cheapestPlatform) {
-                const label = document.createElement("p");
-                label.textContent = "🏆 Lowest Price";
-                offer.appendChild(label);
-            }
+    cheapest.textContent =
+        "Cheapest Platform: " + product.cheapestPlatform;
 
-            container.appendChild(offer);
-        });
-
-        const saving = document.createElement("h3");
-        saving.textContent =
-            "Cheapest Platform: " + data.cheapestPlatform;
-
-        const lowest = document.createElement("h3");
-        lowest.textContent =
-            "Lowest Price: ₹" +
-            Number(data.lowestPrice).toLocaleString("en-IN");
-
-        container.append(lowest, saving);
-
-    } catch (error) {
-        console.error("Comparison error:", error);
-        alert("Unable to compare prices.");
-    }
+    container.append(lowest, cheapest);
 }
-// 8. PRODUCT DETAILS
 
-async function showProductDetails(productId) {
+// ==========================================
+// 13. PRODUCT DETAILS
+// ==========================================
 
-    const product = allProducts.find(
-        item => item.id === productId
+function showProductDetails(productId) {
+
+    const product = [...allProducts, ...currentProducts].find(
+        item => String(item.id) === String(productId)
     );
 
     if (!product) return;
@@ -457,27 +725,62 @@ async function showProductDetails(productId) {
     const container =
         document.getElementById("productDetails");
 
+    if (!container) return;
+
     container.innerHTML = "";
 
     const heading = document.createElement("h2");
+
     heading.textContent = product.product_name;
 
     const brand = document.createElement("p");
+
     brand.textContent = "Brand: " + (product.brand || "N/A");
 
     const category = document.createElement("p");
-    category.textContent = "Category: " + (product.category || "N/A");
 
-    const button = document.createElement("button");
-    button.textContent = "Compare Prices";
+    category.textContent =
+        "Category: " + (product.category || "N/A");
 
-    button.addEventListener("click", function() {
+    const quantity = document.createElement("p");
+
+    quantity.textContent =
+        "Quantity: " + (product.quantity || "N/A");
+
+    container.append(heading, brand, category, quantity);
+
+    if (product.image_url) {
+
+        const image = document.createElement("img");
+
+        image.src = product.image_url;
+
+        image.alt = product.product_name;
+
+        image.style.maxWidth = "200px";
+
+        image.onerror = function() {
+            image.remove();
+        };
+
+        container.appendChild(image);
+    }
+
+    const compareButton = document.createElement("button");
+
+    compareButton.textContent = "Compare Prices";
+
+    compareButton.addEventListener("click", function() {
+
         comparePrices(product.id);
     });
 
-    container.append(heading, brand, category, button);
+    container.appendChild(compareButton);
 }
-// 9. WISHLIST
+
+// ==========================================
+// 14. WISHLIST
+// ==========================================
 
 function toggleWishlist(product) {
 
@@ -486,13 +789,17 @@ function toggleWishlist(product) {
     );
 
     if (exists) {
+
         wishlist = wishlist.filter(
             item => item.id !== product.id
         );
 
         showToast("Removed from wishlist!");
+
     } else {
+
         wishlist.push(product);
+
         showToast("❤️ Added to wishlist!");
     }
 
@@ -504,10 +811,15 @@ function displayWishlist() {
     const container =
         document.getElementById("wishlistProducts");
 
+    if (!container) return;
+
     container.innerHTML = "";
 
     if (wishlist.length === 0) {
-        container.innerHTML = "<p>Your wishlist is empty.</p>";
+
+        container.innerHTML =
+            "<p>Your wishlist is empty.</p>";
+
         return;
     }
 
@@ -516,21 +828,27 @@ function displayWishlist() {
         const card = createProductCard(product);
 
         const removeButton = document.createElement("button");
+
         removeButton.textContent = "Remove";
 
         removeButton.addEventListener("click", function() {
+
             wishlist = wishlist.filter(
                 item => item.id !== product.id
             );
+
             displayWishlist();
         });
 
         card.appendChild(removeButton);
+
         container.appendChild(card);
     });
 }
 
-// 10. SHOPPING LIST
+// ==========================================
+// 15. SHOPPING LIST
+// ==========================================
 
 function addToShoppingList(product) {
 
@@ -539,7 +857,9 @@ function addToShoppingList(product) {
     );
 
     if (exists) {
-        alert("Product is already in your shopping list.");
+
+        showToast("Product already in shopping list!", "error");
+
         return;
     }
 
@@ -558,11 +878,14 @@ function displayShoppingList() {
     const totalElement =
         document.getElementById("shoppingTotal");
 
+    if (!container || !totalElement) return;
+
     container.innerHTML = "";
 
     let total = 0;
 
     if (shoppingList.length === 0) {
+
         container.innerHTML =
             "<p>Your shopping list is empty.</p>";
     }
@@ -570,15 +893,29 @@ function displayShoppingList() {
     shoppingList.forEach(product => {
 
         const card = document.createElement("div");
+
         card.className = "product-card";
 
         const name = document.createElement("h3");
+
         name.textContent = product.product_name;
 
+        const price = document.createElement("p");
+
+        const productPrice = Number(product.lowestPrice || 0);
+
+        price.textContent =
+            "Lowest Price: ₹" +
+            productPrice.toLocaleString("en-IN");
+
+        total += productPrice;
+
         const remove = document.createElement("button");
+
         remove.textContent = "Remove";
 
         remove.addEventListener("click", function() {
+
             shoppingList = shoppingList.filter(
                 item => item.id !== product.id
             );
@@ -586,98 +923,99 @@ function displayShoppingList() {
             displayShoppingList();
         });
 
-        card.append(name, remove);
+        card.append(name, price, remove);
+
         container.appendChild(card);
     });
 
     totalElement.textContent =
-        "Estimated Total: ₹" + total.toFixed(2);
+        "Estimated Total: ₹" + total.toLocaleString("en-IN");
 }
 
-// 11. BEST DEALS
+// ==========================================
+// 16. BEST DEALS
+// ==========================================
 
 async function loadBestDeals() {
 
     const container =
         document.getElementById("dealsProducts");
 
+    if (!container) return;
+
     container.innerHTML = "<p>Finding best deals...</p>";
 
     try {
 
-        const deals = await Promise.all(
-            allProducts.map(async product => {
+        // Use already loaded API data.
+        // No need to call the old /compare endpoint.
 
-                try {
-
-                    const response = await fetch(
-                        `${API_URL}/compare/${product.id}`
-                    );
-
-                    if (!response.ok) return null;
-
-                    const data = await response.json();
-
-                    return {
-                        ...product,
-                        lowestPrice: Number(data.lowestPrice),
-                        cheapestPlatform: data.cheapestPlatform
-                    };
-
-                } catch {
-                    return null;
-                }
-            })
-        );
-
-        const validDeals = deals
-            .filter(item => item !== null)
-            .sort((a, b) => a.lowestPrice - b.lowestPrice);
+        const validDeals = allProducts
+            .filter(product =>
+                product.offers &&
+                product.offers.length > 0 &&
+                Number(product.lowestPrice) > 0
+            )
+            .sort((a, b) =>
+                Number(a.lowestPrice) - Number(b.lowestPrice)
+            );
 
         container.innerHTML = "";
 
         if (validDeals.length === 0) {
+
             container.innerHTML =
                 "<p>No price offers available.</p>";
+
             return;
         }
 
         validDeals.forEach(product => {
 
             const card = document.createElement("div");
+
             card.className = "product-card";
 
             const name = document.createElement("h3");
+
             name.textContent = product.product_name;
 
             const price = document.createElement("h2");
+
             price.textContent =
-                "₹" + product.lowestPrice.toLocaleString("en-IN");
+                "₹" + Number(product.lowestPrice).toLocaleString("en-IN");
 
             const store = document.createElement("p");
+
             store.textContent =
                 "Cheapest at: " + product.cheapestPlatform;
 
             const button = document.createElement("button");
+
             button.textContent = "View Comparison";
 
             button.addEventListener("click", function() {
+
                 comparePrices(product.id);
             });
 
             card.append(name, price, store, button);
+
             container.appendChild(card);
         });
 
     } catch (error) {
-        console.error(error);
+
+        console.error("Best deals error:", error);
+
         container.innerHTML =
             "<p>Unable to load deals.</p>";
     }
 }
 
-
-// 12. RECENT SEARCHES
+// ==========================================
+// 17. RECENT SEARCHES
+// ==========================================
 
 function displayRecentSearches() {
 
@@ -689,18 +1027,25 @@ function displayRecentSearches() {
     container.innerHTML = "";
 
     if (recentSearches.length === 0) {
+
         container.innerHTML =
             "<p>No recent searches.</p>";
+
         return;
     }
 
     recentSearches.forEach(search => {
 
         const button = document.createElement("button");
+
         button.textContent = search;
 
         button.addEventListener("click", function() {
-            searchInput.value = search;
+
+            if (searchInput) {
+                searchInput.value = search;
+            }
+
             searchProduct(search);
         });
 
@@ -709,28 +1054,33 @@ function displayRecentSearches() {
 }
 
 // ==========================================
-// 13. SMART SHOPPING ASSISTANT
+// 18. SMART SHOPPING ASSISTANT
 // ==========================================
 
 const assistantForm =
     document.getElementById("assistantForm");
 
-assistantForm.addEventListener("submit", function(event) {
-    event.preventDefault();
+if (assistantForm) {
 
-    const input =
-        document.getElementById("assistantInput");
+    assistantForm.addEventListener("submit", function(event) {
 
-    const message = input.value.trim();
+        event.preventDefault();
 
-    if (!message) return;
+        const input =
+            document.getElementById("assistantInput");
 
-    processAssistantMessage(message);
+        const message = input.value.trim();
 
-    input.value = "";
-});
+        if (!message) return;
+
+        processAssistantMessage(message);
+
+        input.value = "";
+    });
+}
 
 function useAssistantSuggestion(message) {
+
     processAssistantMessage(message);
 }
 
@@ -739,8 +1089,12 @@ function processAssistantMessage(message) {
     const container =
         document.getElementById("assistantMessages");
 
+    if (!container) return;
+
     const userMessage = document.createElement("div");
+
     userMessage.className = "assistant-message user-message";
+
     userMessage.textContent = message;
 
     container.appendChild(userMessage);
@@ -751,47 +1105,56 @@ function processAssistantMessage(message) {
 
     if (text.includes("under")) {
 
-        const match = text.match(/under\s*(?:₹|rs\.?\s*)?(\d+)/);
+        const match = text.match(
+            /under\s*(?:₹|rs\.?\s*)?(\d+)/
+        );
 
         if (match) {
 
             const budget = Number(match[1]);
 
-            const matching = allProducts.filter(
-                product => {
-                    const price = Number(product.price || 0);
-                    return price > 0 && price <= budget;
-                }
-            );
+            const matching = allProducts.filter(product => {
+
+                const price = Number(product.lowestPrice || 0);
+
+                return price > 0 && price <= budget;
+            });
 
             reply = matching.length
                 ? "Products within your budget: " +
                   matching.map(p => p.product_name).join(", ")
-                : "No matching products with known prices were found.";
+                : "No matching products within your budget were found.";
+
         } else {
-            reply = "Please mention your budget, for example: under 300.";
+
+            reply =
+                "Please mention your budget, for example: under 300.";
         }
 
-    } else if (text.includes("cheapest") || text.includes("compare")) {
+    } else if (
+        text.includes("cheapest") ||
+        text.includes("compare")
+    ) {
 
-        const word = text.includes("rice") ? "rice" :
-                     text.includes("milk") ? "milk" : "";
+        const searchWords = text
+            .replace(/cheapest|compare|price|prices|of|the|show|me/gi, "")
+            .trim();
 
-        if (word) {
+        const matching = allProducts.filter(product =>
+            matchesSearch(product, searchWords)
+        );
 
-            const matching = allProducts.filter(
-                product =>
-                    product.product_name.toLowerCase().includes(word)
-            );
+        if (matching.length > 0) {
 
-            reply = matching.length
-                ? "I found: " +
-                  matching.map(p => p.product_name).join(", ") +
-                  ". Open Compare Prices to see their available offers."
-                : "No matching products are currently available.";
+            reply =
+                "I found these products: " +
+                matching.map(p => p.product_name).join(", ") +
+                ". Open Compare Prices to see retailer offers.";
 
         } else {
-            reply = "Search for a product to compare its available prices.";
+
+            reply =
+                "Please search for a product name such as rice, milk or Samsung.";
         }
 
     } else if (text.includes("save")) {
@@ -803,11 +1166,14 @@ function processAssistantMessage(message) {
     } else {
 
         reply =
-            "I can help you find products, compare prices and check products within a budget.";
+            "I can help you find products, compare Amazon and Flipkart prices, " +
+            "and find products within your budget.";
     }
 
     const botMessage = document.createElement("div");
+
     botMessage.className = "assistant-message bot-message";
+
     botMessage.textContent = reply;
 
     container.appendChild(botMessage);
@@ -816,78 +1182,97 @@ function processAssistantMessage(message) {
 }
 
 // ==========================================
-// 14. PRICE TRACKER
+// 19. PRICE TRACKER
 // ==========================================
 
 const trackerForm =
     document.getElementById("priceTrackerForm");
 
-trackerForm.addEventListener("submit", function(event) {
+if (trackerForm) {
 
-    event.preventDefault();
+    trackerForm.addEventListener("submit", function(event) {
 
-    const name =
-        document.getElementById("trackerProductName").value.trim();
+        event.preventDefault();
 
-    const target =
-        Number(document.getElementById("trackerTargetPrice").value);
+        const name =
+            document.getElementById("trackerProductName").value.trim();
 
-    if (!name || target <= 0) {
-        alert("Enter a valid product name and target price.");
-        return;
-    }
+        const target =
+            Number(document.getElementById("trackerTargetPrice").value);
 
-    const exists = trackedProducts.some(
-        item => item.name.toLowerCase() === name.toLowerCase()
-    );
+        if (!name || target <= 0) {
 
-    if (exists) {
-        alert("This product is already being tracked.");
-        return;
-    }
+            alert("Enter a valid product name and target price.");
 
-    trackedProducts.push({
-        id: Date.now(),
-        name: name,
-        targetPrice: target
+            return;
+        }
+
+        const exists = trackedProducts.some(
+            item => item.name.toLowerCase() === name.toLowerCase()
+        );
+
+        if (exists) {
+
+            alert("This product is already being tracked.");
+
+            return;
+        }
+
+        trackedProducts.push({
+
+            id: Date.now(),
+
+            name: name,
+
+            targetPrice: target
+        });
+
+        trackerForm.reset();
+
+        displayTrackedPrices();
+
+        alert("Product added to price tracker!");
     });
-
-    trackerForm.reset();
-
-    displayTrackedPrices();
-
-    alert("Product added to price tracker!");
-});
+}
 
 function displayTrackedPrices() {
 
     const container =
         document.getElementById("trackedProducts");
 
+    if (!container) return;
+
     container.innerHTML = "";
 
     if (trackedProducts.length === 0) {
+
         container.innerHTML =
             "<p>Your tracked products will appear here.</p>";
+
         return;
     }
 
     trackedProducts.forEach(item => {
 
         const card = document.createElement("div");
+
         card.className = "product-card";
 
         const heading = document.createElement("h3");
+
         heading.textContent = item.name;
 
         const target = document.createElement("p");
+
         target.textContent =
             "Target Price: ₹" + item.targetPrice.toFixed(2);
 
         const remove = document.createElement("button");
+
         remove.textContent = "Remove";
 
         remove.addEventListener("click", function() {
+
             trackedProducts = trackedProducts.filter(
                 product => product.id !== item.id
             );
@@ -896,12 +1281,13 @@ function displayTrackedPrices() {
         });
 
         card.append(heading, target, remove);
+
         container.appendChild(card);
     });
 }
 
 // ==========================================
-// 15. THEME
+// 20. THEME
 // ==========================================
 
 let darkMode = false;
@@ -914,16 +1300,20 @@ function toggleTheme() {
 }
 
 // ==========================================
-// 16. INITIALIZE PRICEWISE
+// 21. INITIALIZE PRICEWISE
 // ==========================================
 
-loadProducts();
+async function initializePriceWise() {
 
-showHome();
+    await loadProducts();
 
-displayWishlist();
+    showHome();
 
-displayShoppingList();
+    displayWishlist();
 
-displayTrackedPrices();
+    displayShoppingList();
 
+    displayTrackedPrices();
+}
+
+initializePriceWise();

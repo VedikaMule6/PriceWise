@@ -1,20 +1,31 @@
 
-require("dotenv").config();
+app.get("/api/test-db", async (req, res) => {
+    let connection;
 
-const pool = require("./db/connection");
-
-async function testConnection() {
     try {
-        const connection = await pool.getConnection();
+        connection = await pool.getConnection();
 
-        console.log("MySQL Connected Successfully!");
+        const [result] = await connection.query("SELECT 1 AS test");
 
-        connection.release();
-        await pool.end();
+        res.json({
+            success: true,
+            message: "TiDB connected successfully!",
+            data: result
+        });
 
     } catch (error) {
-        console.log("MySQL Connection Failed:", error.message);
-    }
-}
+        console.error("Database Test Error:", error);
 
-testConnection();
+        res.status(500).json({
+            success: false,
+            message: "Database connection failed",
+            error: error.message || String(error),
+            code: error.code || "UNKNOWN"
+        });
+
+    } finally {
+        if (connection) {
+            connection.release();
+        }
+    }
+});

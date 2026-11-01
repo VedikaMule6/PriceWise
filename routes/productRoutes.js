@@ -3,7 +3,78 @@ const express = require("express");
 const router = express.Router();
 const pool = require("../db/connection");
 
-// GET all products
+const { searchAmazonProducts } = require("../services/amazonService");
+const { searchFlipkartProducts } = require("../services/flipkartService");
+
+// GET products from Amazon and Flipkart mock APIs
+router.get("/search", async (req, res) => {
+    try {
+        const search = String(req.query.search || "");
+        const category = String(req.query.category || "");
+
+        const [amazonProducts, flipkartProducts] = await Promise.all([
+            searchAmazonProducts(search, category),
+            searchFlipkartProducts(search, category)
+        ]);
+
+        const products = [...amazonProducts, ...flipkartProducts];
+
+        // Group the same product from both platforms
+        const groupedProducts = Object.values(
+            products.reduce((groups, product) => {
+                if (!groups[product.id]) {
+                    groups[product.id] = {
+                        id: product.id,
+                        productName: product.productName,
+                        brand: product.brand,
+                        category: product.category,
+                        quantity: product.quantity,
+                        imageUrl: product.imageUrl,
+                        offers: []
+                    };
+                }
+
+                groups[product.id].offers.push({
+                    platform: product.platform,
+                    price: product.price,
+                    mrp: product.mrp,
+                    discountPercent: product.discountPercent,
+                    rating: product.rating,
+                    reviewCount: product.reviewCount,
+                    availability: product.availability,
+                    productUrl: product.productUrl,
+                    priceSource: product.priceSource
+                });
+
+                return groups;
+            }, {})
+        );
+
+        // Sort offers by lowest price
+        groupedProducts.forEach(product => {
+            product.offers.sort((a, b) => a.price - b.price);
+            product.lowestPrice = product.offers[0]?.price ?? null;
+            product.cheapestPlatform = product.offers[0]?.platform ?? null;
+        });
+
+        res.json({
+            success: true,
+            count: groupedProducts.length,
+            products: groupedProducts
+        });
+
+    } catch (error) {
+        console.error("Mock API Search Error:", error);
+
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
+
+// GET all products from database
 router.get("/", async (req, res) => {
     try {
         const [products] = await pool.query(
@@ -24,7 +95,8 @@ router.get("/", async (req, res) => {
     }
 });
 
-// GET product prices for comparison
+
+// GET product prices for database comparison
 router.get("/compare/:id", async (req, res) => {
     try {
         const productId = req.params.id;
