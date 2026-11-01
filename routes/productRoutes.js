@@ -6,11 +6,14 @@ const pool = require("../db/connection");
 const { searchAmazonProducts } = require("../services/amazonService");
 const { searchFlipkartProducts } = require("../services/flipkartService");
 
-// GET products from Amazon and Flipkart mock APIs
+// ==========================================
+// 1. SEARCH AMAZON AND FLIPKART JSON PRODUCTS
+// ==========================================
+
 router.get("/search", async (req, res) => {
     try {
-        const search = String(req.query.search || "");
-        const category = String(req.query.category || "");
+        const search = String(req.query.search || "").trim();
+        const category = String(req.query.category || "").trim();
 
         const [amazonProducts, flipkartProducts] = await Promise.all([
             searchAmazonProducts(search, category),
@@ -19,7 +22,7 @@ router.get("/search", async (req, res) => {
 
         const products = [...amazonProducts, ...flipkartProducts];
 
-        // Group the same product from both platforms
+        // Group matching products from both platforms
         const groupedProducts = Object.values(
             products.reduce((groups, product) => {
                 if (!groups[product.id]) {
@@ -36,7 +39,7 @@ router.get("/search", async (req, res) => {
 
                 groups[product.id].offers.push({
                     platform: product.platform,
-                    price: product.price,
+                    price: Number(product.price),
                     mrp: product.mrp,
                     discountPercent: product.discountPercent,
                     rating: product.rating,
@@ -50,11 +53,15 @@ router.get("/search", async (req, res) => {
             }, {})
         );
 
-        // Sort offers by lowest price
+        // Sort offers from lowest to highest price
         groupedProducts.forEach(product => {
             product.offers.sort((a, b) => a.price - b.price);
-            product.lowestPrice = product.offers[0]?.price ?? null;
-            product.cheapestPlatform = product.offers[0]?.platform ?? null;
+
+            product.lowestPrice =
+                product.offers[0]?.price ?? null;
+
+            product.cheapestPlatform =
+                product.offers[0]?.platform ?? null;
         });
 
         res.json({
@@ -68,13 +75,15 @@ router.get("/search", async (req, res) => {
 
         res.status(500).json({
             success: false,
-            message: error.message
+            message: error.message || "Unable to search products"
         });
     }
 });
 
+// ==========================================
+// 2. GET ALL PRODUCTS FROM MYSQL DATABASE
+// ==========================================
 
-// GET all products from database
 router.get("/", async (req, res) => {
     try {
         const [products] = await pool.query(
@@ -88,15 +97,19 @@ router.get("/", async (req, res) => {
         });
 
     } catch (error) {
+        console.error("Database Product Error:", error);
+
         res.status(500).json({
             success: false,
-            message: error.message
+            message: error.message || "Unable to load products"
         });
     }
 });
 
+// ==========================================
+// 3. GET PRODUCT PRICE COMPARISON FROM MYSQL
+// ==========================================
 
-// GET product prices for database comparison
 router.get("/compare/:id", async (req, res) => {
     try {
         const productId = req.params.id;
@@ -112,7 +125,7 @@ router.get("/compare/:id", async (req, res) => {
                 pp.product_url
             FROM products p
             JOIN product_prices pp
-            ON p.id = pp.product_id
+                ON p.id = pp.product_id
             WHERE p.id = ?
             ORDER BY pp.price ASC`,
             [productId]
@@ -134,9 +147,11 @@ router.get("/compare/:id", async (req, res) => {
         });
 
     } catch (error) {
+        console.error("Product Comparison Error:", error);
+
         res.status(500).json({
             success: false,
-            message: error.message
+            message: error.message || "Unable to compare prices"
         });
     }
 });

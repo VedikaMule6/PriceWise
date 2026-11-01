@@ -12,10 +12,8 @@ app.use(express.json());
 // Database connection
 const pool = require("./db/connection");
 
-// Import product routes
+// Product routes
 const productRoutes = require("./routes/productRoutes");
-
-// Product API routes
 app.use("/api/products", productRoutes);
 
 // Database test route
@@ -50,18 +48,13 @@ app.get("/api/test-db", async (req, res) => {
     }
 });
 
-// Serve frontend files without caching old JavaScript
+// Serve frontend files
 app.use(express.static(__dirname, {
     setHeaders: (res, filePath) => {
         const fileName = path.basename(filePath).toLowerCase();
 
         if (fileName === "index.html" || fileName === "script.js") {
-            res.setHeader(
-                "Cache-Control",
-                "no-store, no-cache, must-revalidate, proxy-revalidate"
-            );
-            res.setHeader("Pragma", "no-cache");
-            res.setHeader("Expires", "0");
+            res.setHeader("Cache-Control", "no-store");
         }
     }
 }));
